@@ -1,2 +1,122 @@
 # Inter-VLAN-Routing-with-Cisco-Router-on-a-Stick
 Configured VLANs and inter-VLAN routing using a Cisco router and 802.1Q trunking.
+
+## Project Overview
+
+After working with VLANs, I wanted to understand how devices in different VLANs could communicate. I built a small network in Cisco Packet Tracer and configured inter-VLAN routing using a Cisco router and the router-on-a-stick method.
+
+### Topology
+
+* 1 Cisco router
+* 1 Cisco switch
+* 3 PCs
+* VLAN 10, VLAN 20 and VLAN 30
+* 802.1Q trunk between the switch and router
+
+### IP Addressing
+
+| VLAN    | Network         | Gateway      |
+| ------- | --------------- | ------------ |
+| VLAN 10 | 192.168.10.0/24 | 192.168.10.1 |
+| VLAN 20 | 192.168.20.0/24 | 192.168.20.1 |
+| VLAN 30 | 192.168.30.0/24 | 192.168.30.1 |
+
+## What I Did
+
+I first created VLANs 10, 20 and 30 on the switch and assigned the PCs to their respective VLANs.
+
+I then configured the switch port connected to the router as a trunk because I needed one connection to carry traffic from all three VLANs.
+
+On the router, I created three subinterfaces:
+
+* `G0/0.10` → VLAN 10
+* `G0/0.20` → VLAN 20
+* `G0/0.30` → VLAN 30
+
+Each subinterface was given an IP address that became the default gateway for its VLAN.
+
+After configuring everything, I checked the routing table using:
+
+```text
+show ip route
+```
+
+I could see the three VLAN networks as directly connected routes.
+
+## Testing
+
+I tested connectivity between the VLANs using `ping`.
+
+For example:
+
+```text
+PC1 → PC2
+PC1 → PC3
+PC2 → PC1
+PC2 → PC3
+PC3 → PC1
+PC3 → PC2
+```
+
+The successful pings showed me that the router was correctly forwarding traffic between the different VLANs.
+
+I also used:
+
+```text
+tracert <destination IP>
+```
+
+to see the path traffic took between devices.
+
+## Troubleshooting
+
+I wanted to test whether I could troubleshoot the network instead of only following the configuration steps, so I intentionally introduced a fault.
+
+I changed the IP address on the VLAN 20 router subinterface so that it no longer matched the gateway configured on the PC.
+
+When I tried to ping a device in VLAN 20, the connection failed.
+
+Instead of changing random configurations, I worked through the network step by step.
+
+I checked:
+
+1. The PC's IP address, subnet mask and default gateway.
+2. Whether the PC was assigned to the correct VLAN.
+3. Whether the switch-to-router connection was still a trunk.
+4. The router's subinterfaces using:
+
+```text
+show ip interface brief
+```
+
+5. The routing table using:
+
+```text
+show ip route
+```
+
+The routing table helped me identify that the expected `192.168.20.0/24` network was no longer being represented correctly.
+
+I corrected the configuration on `G0/0.20` and tested the connection again. The pings were successful after the fix.
+
+## What I Learned
+
+This project helped me understand that VLANs separate networks, while routing provides a way for those networks to communicate.
+
+More importantly, I learned that troubleshooting should be systematic. When the connection failed, I didn't immediately assume the router was the problem. I checked the path from the PC, through the VLAN and trunk, to the router and its routing table.
+
+### Key Commands I Practiced
+
+```text
+show vlan brief
+show interfaces trunk
+show ip interface brief
+show ip route
+ping
+tracert
+```
+
+### Project File
+
+`inter-vlan-routing.pkt`
+
